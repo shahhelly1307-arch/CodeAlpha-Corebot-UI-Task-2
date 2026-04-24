@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORE AI | 2026 PROTOCOL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #000000; --card: rgba(10, 10, 10, 0.98); --text: #888888;
+            --orange: #ff8200; --border: #222; --msg-bot: #111;
+        }
+        .light-theme {
+            --bg: #D2B48C; /* Coffee Cream */
+            --card: rgba(62, 39, 35, 0.15); --text: #3e2723;
+            --border: #a1887f; --msg-bot: #efebe9;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; transition: 0.5s; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        
+        .app { width: 95%; max-width: 500px; height: 94vh; background: var(--card); border: 1px solid var(--border); border-radius: 20px; z-index: 10; display: flex; flex-direction: column; backdrop-filter: blur(15px); color: var(--text); position: relative; }
+        header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        
+        /* HEADER LOGO SECTION */
+        .bot-id { display: flex; align-items: center; gap: 12px; }
+        .bot-id .robot-icon { color: var(--orange); font-size: 35px; display: flex; align-items: center; justify-content: center; }
+        
+        .gear { cursor: pointer; font-size: 18px; background: #333; padding: 10px; border-radius: 50%; color: #fff; }
+        .menu { position: absolute; top: 75px; right: 20px; background: #111; border: 1px solid #444; border-radius: 12px; display: none; z-index: 1000; width: 220px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; }
+        .light-theme .menu { background: #efebe9; border: 1px solid #a1887f; }
+        .menu div { padding: 15px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--border); color: var(--text); font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .menu div:hover { background: var(--orange); color: white; }
+
+        .chat-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; scrollbar-width: none; }
+        .msg { max-width: 85%; padding: 15px; border-radius: 18px; font-size: 14px; line-height: 1.6; word-wrap: break-word; position: relative; display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .bot { background: var(--msg-bot); align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 2px; }
+        
+        /* USER MESSAGE - PURE BLACK BACKGROUND, WHITE TEXT */
+        .user { background: #000000 !important; color: #ffffff !important; align-self: flex-end; border: 1px solid #444; border-bottom-right-radius: 2px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); } 
+
+        footer { padding: 15px; border-top: 1px solid var(--border); }
+        .pills { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; scrollbar-width: none; }
+        .pill { background: #1a1a1a; padding: 10px 15px; border-radius: 20px; font-size: 11px; cursor: pointer; color: #fff; border: 1px solid #333; white-space: nowrap; transition: 0.2s; }
+        .pill:hover { border-color: var(--orange); }
+        .light-theme .pill { background: #5d4037; color: #fff; }
+        
+        .input-box { display: flex; background: var(--msg-bot); border-radius: 30px; padding: 5px 15px; align-items: center; border: 1px solid var(--border); }
+        input { flex: 1; background: transparent; border: none; color: var(--text); outline: none; padding: 10px; }
+        
+        #historyOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 2001; display: none; padding: 25px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="app">
+        <div id="historyOverlay">
+            <h2 style="margin-bottom:20px; color:var(--text)">Full Session History</h2>
+            <div id="historyList"></div>
+            <button onclick="closeHistory()" style="margin-top:20px; padding:15px; width:100%; background:var(--orange); border:none; color:white; border-radius:10px; cursor:pointer; font-weight:bold;">CLOSE HISTORY</button>
+        </div>
+
+        <header>
+            <div class="bot-id">
+                <div class="robot-icon">🤖</div> <div><b style="font-size:18px; letter-spacing:1px;">CORE AI</b><br><small style="color:#00ff88; font-family:monospace;">ACTIVE STREAM ● 2026</small></div>
+            </div>
+            <i class="fas fa-cog gear" id="gear"></i>
+            <div class="menu" id="menu">
+                <div onclick="showHistory()"><i class="fas fa-history"></i> Show History</div>
+                <div onclick="clearHistory()"><i class="fas fa-trash-alt"></i> Clear History</div>
+                <div onclick="shareWA()"><i class="fab fa-whatsapp"></i> Share WhatsApp</div>
+                <div onclick="toggleTheme()"><i class="fas fa-palette"></i> Change Theme</div>
+            </div>
+        </header>
+
+        <div class="chat-area" id="chat"></div>
+
+        <footer>
+            <div class="pills">
+                <div class="pill" onclick="handleSRH()">SRH Specialist Squad</div>
+                <div class="pill" onclick="send('Prime Minister and Market Forecast')">Modi & Markets</div>
+                <div class="pill" onclick="send('Detailed Gold and Silver Prices')">Gold/Silver 2026</div>
+                <div class="pill" onclick="send('Bitcoin and Global Currency Status')">Crypto/USD</div>
+            </div>
+            <div class="input-box">
+                <input type="text" id="in" placeholder="Command CORE AI...">
+                <i class="fas fa-paper-plane" style="color:var(--orange); cursor:pointer; font-size:20px;" onclick="send()"></i>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        let logs = [];
+        const chat = document.getElementById('chat');
+        const input = document.getElementById('in');
+        const menu = document.getElementById('menu');
+
+        document.getElementById('gear').onclick = (e) => { 
+            e.stopPropagation(); 
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; 
+        };
+        document.onclick = () => menu.style.display = 'none';
+
+        function add(t, s) { 
+            const d = document.createElement('div'); 
+            d.className = `msg ${s}`; 
+            d.innerHTML = t; 
+            chat.appendChild(d); 
+            chat.scrollTop = chat.scrollHeight; 
+            logs.push({text: t, sender: s});
+        }
+
+        window.onload = () => add("<b>CORE AI Protocol 2026 Activated.</b> Data streams for April 24, 2026, are live. How can I assist?", "bot");
+
+        function toggleTheme() { document.body.classList.toggle('light-theme'); }
+        function clearHistory() { chat.innerHTML = ''; logs = []; add("Cache Cleared. Local memory wiped.", "bot"); }
+        function shareWA() { window.open("https://wa.me/?text=Synchronizing 2026 technical market data from CORE AI."); }
+
+        function showHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = logs.map(l => `<div style="margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:10px;"><b style="color:var(--orange)">${l.sender.toUpperCase()}:</b> <span style="color:var(--text)">${l.text}</span></div>`).join('');
+            document.getElementById('historyOverlay').style.display = 'block';
+        }
+        function closeHistory() { document.getElementById('historyOverlay').style.display = 'none'; }
+
+        function handleSRH() {
+            add("Fetch SRH 2026 Specialist Squad and Strategy.", "user"); 
+            setTimeout(() => {
+                add(`<b>SRH IS NOT ONLY BATTING, THEY ARE SLAPPING!</b><br><br>
+                The 2026 Sunrisers approach has completely redefined T20. Every player is a "Slapping Specialist" designed to maintain a 200+ strike rate.<br><br>
+                <b>2026 MEGA SQUAD SPECIALISTS:</b><br>
+                • <b>Pat Cummins (C):</b> The Aura Specialist. Leads the bowling unit with world-class tactical precision.<br>
+                • <b>Travis Head:</b> The 'Powerplay Slapper'. Specialist in destroying pace in the first 6 overs.<br>
+                • <b>Abhishek Sharma:</b> The Spin-Destruction Specialist. Known for hitting back-to-back sixes against any spin variation.<br>
+                • <b>Heinrich Klaasen:</b> The Finishing Specialist. Holds the 2026 record for the fastest 50 at No. 5.<br>
+                • <b>Ishan Kishan:</b> The Explosive Opener Specialist. New addition for pure top-order chaos.<br>
+                • <b>Nitish Kumar Reddy:</b> The Pace-Allrounder Specialist. Bridging the gap between middle-order batting and death bowling.<br>
+                • <b>T. Natarajan:</b> The Yorker Specialist. Still the most lethal death bowler in the 2026 circuit.<br><br>
+                <i>The squad is currently projected to win the 2026 trophy with an aggressive 'No-Fear' batting blueprint.</i>`, "bot");
+            }, 600);
+        }
+
+        async function send(v) {
+            const val = v || input.value; if(!val) return;
+            add(val, "user"); 
+            input.value = '';
+            
+            let res = "";
+            const low = val.toLowerCase();
+            if(low.includes('gold') || low.includes('silver')) {
+                res = `<b>METALS MARKET REPORT (2026):</b><br><br>
+                <b>Gold (24K):</b> ₹1,52,144 per 10g. Massive bull run continues as inflation hedges become the primary global focus.<br>
+                <b>Gold (22K):</b> ₹1,39,465 per 10g.<br>
+                <b>Silver:</b> ₹2,59,900 per kg. A staggering 45% increase compared to 2025 due to extreme industrial demand for 2026 AI hardware and solar farms.<br><br>
+                <b>Expert Insight:</b> Central banks are increasing reserves, suggesting Gold will touch ₹1.65L by year-end.`;
+            } else if(low.includes('market') || low.includes('modi')) {
+                res = `<b>INDIAN ECONOMY & POLITICS 2026:</b><br><br>
+                <b>Prime Minister Update:</b> PM Modi's 2026 'Digital Bharat 2.0' initiative has integrated AI into all public sectors. Diplomatic ties have secured major semiconductor manufacturing deals.<br><br>
+                <b>Stock Market Pulse:</b><br>
+                • <b>SENSEX:</b> 77,664 (CRASHED by 852 points today).<br>
+                • <b>NIFTY 50:</b> 24,173 (Down 205 points).<br>
+                <b>Analysis:</b> The market is reacting to high oil prices and FII liquidations. However, Defense and Infrastructure stocks are maintaining green zones due to government contract renewals.`;
+            } else if(low.includes('bitcoin') || low.includes('crypto')) {
+                res = `<b>CRYPTO PROTOCOL 2026:</b><br><br>
+                <b>Bitcoin (BTC):</b> $88,450 (₹73,26,893). BTC is currently the "Digital Gold" of 2026, with massive sovereign wealth fund involvement.<br>
+                <b>Ethereum:</b> ₹4,12,000. ETH 2.0 scalability has reached peak adoption.<br>
+                <b>USD/INR:</b> ₹84.42. The Rupee remains steady despite global volatility.`;
+            } else {
+                res = "<b>CORE AI:</b> Data processed. Analyzing 2026 trend lines. System suggests staying focused on high-yield sectors.";
+            }
+            setTimeout(() => add(res, "bot"), 600);
+        }
+
+        // --- FLOATING ALPHABET ENGINE ---
+        const cvs = document.getElementById('canvas'); const ctx = cvs.getContext('2d');
+        let w = cvs.width = window.innerWidth, h = cvs.height = window.innerHeight;
+        const alph = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split("");
+        
+        const particles = Array.from({ length: 70 }, () => ({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            char: alph[Math.floor(Math.random() * alph.length)],
+            speed: 0.3 + Math.random() * 1.5,
+            size: 12 + Math.random() * 18,
+            opacity: 0.1 + Math.random() * 0.6
+        }));
+
+        function draw() {
+            const isL = document.body.classList.contains('light-theme');
+            ctx.fillStyle = isL ? "rgba(210, 180, 140, 0.4)" : "rgba(0,0,0,0.2)";
+            ctx.fillRect(0, 0, w, h);
+            
+            particles.forEach(p => {
+                if (isL) {
+                    const colors = ["#e91e63", "#03a9f4", "#ffeb3b"]; // Pink, Blue, Yellow
+                    ctx.fillStyle = colors[Math.floor(p.x % 3)];
+                } else {
+                    ctx.fillStyle = "#666666"; // Grey for dark mode
+                }
+                
+                ctx.globalAlpha = p.opacity;
+                ctx.font = `bold ${p.size}px monospace`;
+                ctx.fillText(p.char, p.x, p.y);
+                ctx.globalAlpha = 1;
+                
+                p.y += p.speed;
+                if (p.y > h) {
+                    p.y = -20;
+                    p.x = Math.random() * w;
+                    p.char = alph[Math.floor(Math.random() * alph.length)];
+                }
+            });
+            requestAnimationFrame(draw);
+        }
+        draw();
+
+        window.onresize = () => { w = cvs.width = window.innerWidth; h = cvs.height = window.innerHeight; };
+    </script>
+</body>
+</html>
